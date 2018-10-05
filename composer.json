@@ -1,0 +1,25 @@
+{
+  "name": "strongknit/dqbs",
+  "description": "Search service for Doctrine query builder.",
+  "version": "1.0.0",
+  "type": "library",
+  "keywords": [
+    "symfony",
+    "bundle",
+    "doctrine",
+    "search"
+  ],
+  "license": "MIT",
+  "require": {
+    "php": ">=7.0",
+    "symfony/framework-bundle": "^3.0|^4.0",
+    "doctrine/orm": "^2.5",
+    "doctrine/dbal": "^2.5"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.0"
+  },
+  "autoload": {
+    "psr-4": {"Strongknit\\DqbsBundle\\": ""}
+  }
+}
