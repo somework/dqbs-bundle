@@ -16,6 +16,11 @@ class SearchItem
 
     protected $excludedFields;
 
+    /**
+     * SearchItem constructor.
+     * @param string $entityAlias
+     * @param string $searchValue
+     */
     public function __construct($entityAlias, $searchValue)
     {
         $this->entityAlias = $entityAlias;
