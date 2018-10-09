@@ -20,6 +20,6 @@
     "phpunit/phpunit": "^6.0"
   },
   "autoload": {
-    "psr-4": {"Strongknit\\DqbsBundle\\": ""}
+    "psr-4": {"Strongknit\\DqbsBundle\\": "./src/"}
   }
 }

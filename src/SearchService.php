@@ -6,10 +6,13 @@ use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Query\Expr\From;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
-use Strongknit\DqbsBundle\src\DqbsBundleException;
 
 class SearchService
 {
+    const LOGIC_OR = 'OR';
+
+    const LOGIC_AND = 'AND';
+
     protected $searchItems;
 
     protected $qb;
@@ -31,14 +34,43 @@ class SearchService
         $this->searchItems[] = $searchItem;
     }
 
-    public function getWhereString()
+    /**
+     * @throws DqbsBundleException
+     */
+    public function getWhere()
     {
+        $result = [
+            'where' => '',
+            'params' => [],
+        ];
+        foreach ($this->searchItems as $item) {
+            $itemData = $this->getWhereForItem($item);
+            $result['where'] .= '('.$itemData['where'].')'.'OR';
+            $result['params'] = array_merge($result['params'], $itemData['params']);
+        }
+        $result['where'] = ltrim($result['where'], 'OR');
 
+        return $result;
     }
 
-    public function applySearch()
+    /**
+     * @param string $logic
+     * @return $this
+     * @throws DqbsBundleException
+     */
+    public function applySearch($logic = self::LOGIC_AND)
     {
+        $data = $this->getWhere();
+        if (self::LOGIC_AND === mb_strtoupper($logic)) {
+            $this->qb->andWhere($data['where']);
+        } else {
+            $this->qb->orWhere($data['where']);
+        }
+        foreach ($data['params'] as $param) {
+            $this->qb->setParameter($param['name'], $param['value']);
+        }
 
+        return $this;
     }
 
     /**
@@ -46,7 +78,7 @@ class SearchService
      * @return array
      * @throws DqbsBundleException
      */
-    protected function getWhereStringForItem(SearchItem $item)
+    protected function getWhereForItem(SearchItem $item)
     {
         $this->filtersCounter++;
 

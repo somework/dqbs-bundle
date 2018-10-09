@@ -1,6 +1,6 @@
 <?php
 
-namespace Strongknit\DqbsBundle\src;
+namespace Strongknit\DqbsBundle;
 
 
 class DqbsBundleException extends \Exception
