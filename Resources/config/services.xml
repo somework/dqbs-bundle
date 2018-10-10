@@ -5,6 +5,7 @@
 
         http://symfony.com/schema/dic/services/services-1.0.xsd">
     <services>
-        <service id="Strongknit\DqbsBundle\SearchService" />
+        <service id="strongknit_dqbs.search_service" class="Strongknit\DqbsBundle\DqbSearch" public="true" />
+        <service id="Strongknit\DqbsBundle\DqbSearch" alias="strongknit_dqbs.search_service" public="false" />
     </services>
 </container>

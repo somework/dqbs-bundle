@@ -7,7 +7,7 @@ use Doctrine\ORM\Query\Expr\From;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
-class SearchService
+class DqbSearch
 {
     const LOGIC_OR = 'OR';
 
@@ -22,9 +22,9 @@ class SearchService
     protected $qbTablesAliases;
 
     /**
-     * @param SearchItem $searchItem
+     * @param DqbSearchItem $searchItem
      */
-    public function addSearchItem(SearchItem $searchItem)
+    public function addSearchItem(DqbSearchItem $searchItem)
     {
         $this->searchItems[] = $searchItem;
     }
@@ -74,11 +74,11 @@ class SearchService
     }
 
     /**
-     * @param SearchItem $item
+     * @param DqbSearchItem $item
      * @return array
      * @throws DqbsBundleException
      */
-    protected function getWhereForItem(SearchItem $item)
+    protected function getWhereForItem(DqbSearchItem $item)
     {
         self::$filtersCounter++;
 

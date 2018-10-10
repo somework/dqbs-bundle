@@ -2,7 +2,7 @@
 
 namespace Strongknit\DqbsBundle;
 
-class SearchItem
+class DqbSearchItem
 {
     protected $entityAlias;
 
@@ -40,7 +40,7 @@ class SearchItem
 
     /**
      * @param string $entityAlias
-     * @return SearchItem
+     * @return DqbSearchItem
      */
     public function setEntityAlias($entityAlias)
     {
@@ -59,7 +59,7 @@ class SearchItem
 
     /**
      * @param string $searchValue
-     * @return SearchItem
+     * @return DqbSearchItem
      */
     public function setSearchValue($searchValue)
     {
@@ -78,30 +78,11 @@ class SearchItem
 
     /**
      * @param string $searchValueIgnorePrefix
-     * @return SearchItem
+     * @return DqbSearchItem
      */
     public function setSearchValueIgnorePrefix($searchValueIgnorePrefix)
     {
         $this->searchValueIgnorePrefix = $searchValueIgnorePrefix;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isSearchByEntityFields()
-    {
-        return $this->searchByEntityFields;
-    }
-
-    /**
-     * @param bool $searchByEntityFields
-     * @return SearchItem
-     */
-    public function setSearchByEntityFields($searchByEntityFields)
-    {
-        $this->searchByEntityFields = $searchByEntityFields;
 
         return $this;
     }
@@ -115,8 +96,8 @@ class SearchItem
     }
 
     /**
-     * @param mixed $includedFields
-     * @return SearchItem
+     * @param array $includedFields
+     * @return DqbSearchItem
      */
     public function setIncludedFields($includedFields)
     {
@@ -135,7 +116,7 @@ class SearchItem
 
     /**
      * @param array $excludedFields
-     * @return SearchItem
+     * @return DqbSearchItem
      */
     public function setExcludedFields($excludedFields)
     {
