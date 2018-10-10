@@ -1,7 +1,7 @@
 {
   "name": "strongknit/dqbs",
   "description": "Search service for Doctrine query builder.",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "type": "library",
   "keywords": [
     "symfony",
@@ -21,10 +21,5 @@
   },
   "autoload": {
     "psr-4": {"Strongknit\\DqbsBundle\\": "./src/"}
-  },
-  "extra": {
-    "symfony": {
-      "allow-contrib": "true"
-    }
   }
 }
