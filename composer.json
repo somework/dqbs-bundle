@@ -21,5 +21,10 @@
   },
   "autoload": {
     "psr-4": {"Strongknit\\DqbsBundle\\": "./src/"}
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": "true"
+    }
   }
 }

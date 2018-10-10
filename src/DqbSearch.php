@@ -17,16 +17,19 @@ class DqbSearch
 
     protected $qb;
 
-    protected static $filtersCounter;
+    protected $filtersCounter;
 
     protected $qbTablesAliases;
 
     /**
      * @param DqbSearchItem $searchItem
+     * @return DqbSearch
      */
     public function addSearchItem(DqbSearchItem $searchItem)
     {
         $this->searchItems[] = $searchItem;
+
+        return $this;
     }
 
     /**
@@ -37,19 +40,18 @@ class DqbSearch
      */
     public function applySearch(QueryBuilder $qb, $logic = self::LOGIC_AND)
     {
-        self::$filtersCounter = 0;
+        $this->filtersCounter = 0;
         $this->qb = $qb;
         $this->getQbTablesAliases();
         $data = $this->getWhere();
-        dump($data);
-        /*if (self::LOGIC_AND === mb_strtoupper($logic)) {
+        if (self::LOGIC_AND === mb_strtoupper($logic)) {
             $this->qb->andWhere($data['where']);
         } else {
             $this->qb->orWhere($data['where']);
         }
         foreach ($data['params'] as $param) {
             $this->qb->setParameter($param['name'], $param['value']);
-        }*/
+        }
 
         return $this;
     }
@@ -65,10 +67,10 @@ class DqbSearch
         ];
         foreach ($this->searchItems as $item) {
             $itemData = $this->getWhereForItem($item);
-            $result['where'] .= '('.$itemData['where'].')'.'OR';
+            $result['where'] .= '('.$itemData['where'].')'.' OR ';
             $result['params'] = array_merge($result['params'], $itemData['params']);
         }
-        $result['where'] = ltrim($result['where'], 'OR');
+        $result['where'] = rtrim($result['where'], ' OR ');
 
         return $result;
     }
@@ -80,7 +82,7 @@ class DqbSearch
      */
     protected function getWhereForItem(DqbSearchItem $item)
     {
-        self::$filtersCounter++;
+        $this->filtersCounter++;
 
         $itemClassName = $this->qbTablesAliases[$item->getEntityAlias()] ?? null;
         if (!$itemClassName) {
@@ -95,52 +97,47 @@ class DqbSearch
         }
         if ($diff = array_diff($item->getExcludedFields(), $entityFields)) {
             $diff = implode($diff, ',');
-            throw new DqbsBundleException(sprintf('No fields "%s" in the entity "%s". Set in exclude_fields.', $diff, $item->getEntityAlias()));
+            throw new DqbsBundleException(sprintf('No fields "%s" in the entity "%s".', $diff, $item->getEntityAlias()));
         }
 
         $includeFields = $item->getIncludedFields() ?: $entityFields;
         $includeFields = array_diff($includeFields, $item->getExcludedFields());
 
         $useFilterT = $useFilterI = false;
-        $tParamName = 'tfilter'.self::$filtersCounter;
-        $iParamName = 'ifilter'.self::$filtersCounter;
+        $tParamName = 'tFilter'.$this->filtersCounter;
+        $iParamName = 'iFilter'.$this->filtersCounter;
 
-        $filterWhere = '';
         $where = '';
         $params = [];
         foreach ($includeFields as $incF) {
             $fieldType = $metadata->getTypeOfField($incF);
             if (in_array($fieldType, [Type::JSON_ARRAY])) {
                 $useFilterT = true;
-                $filterWhere .= '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName)) OR ";
+                $where .= '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName)) OR ";
             } elseif (in_array($fieldType, [Type::STRING, Type::TEXT])) {
                 $useFilterT = true;
-                $filterWhere .= '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName)) OR ";
+                $where .= '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName)) OR ";
             } elseif (in_array($fieldType, [Type::BIGINT, Type::INTEGER, Type::SMALLINT]) && is_numeric($item->getSearchValue())) {
                 $useFilterI = true;
-                $filterWhere .= '('.$item->getEntityAlias().'.'.$incF." = :$iParamName) OR ";
-            }
-
-            if ($filterWhere) {
-                $filterWhere = rtrim($filterWhere, ' OR ');
-                $where = "$where OR ( $filterWhere )";
-            }
-
-            if ($useFilterT) {
-                $params[] = [
-                    'name' => $tParamName,
-                    'value' => "%{$item->getSearchValue()}%",
-                ];
-            }
-
-            if ($useFilterI) {
-                $params[] = [
-                    'name' => $iParamName,
-                    'value' => (int) $item->getSearchValue(),
-                ];
+                $where .= '('.$item->getEntityAlias().'.'.$incF." = :$iParamName) OR ";
             }
         }
-        $where = ltrim($where, " OR ");
+
+        if ($useFilterT) {
+            $params[] = [
+                'name' => $tParamName,
+                'value' => "%{$item->getSearchValue()}%",
+            ];
+        }
+
+        if ($useFilterI) {
+            $params[] = [
+                'name' => $iParamName,
+                'value' => (int) $item->getSearchValue(),
+            ];
+        }
+
+        $where = rtrim($where, " OR ");
 
         return [
             'where' => $where,

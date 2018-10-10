@@ -20,14 +20,16 @@ class DqbSearchItem
      * SearchItem constructor.
      * @param string $entityAlias
      * @param string $searchValue
+     * @param array  $includeFields
+     * @param array  $excludedFields
      */
-    public function __construct($entityAlias, $searchValue)
+    public function __construct($entityAlias, $searchValue, $includeFields = [], $excludedFields = [])
     {
         $this->entityAlias = $entityAlias;
         $this->searchValue = $searchValue;
         $this->searchByEntityFields = true;
-        $this->includedFields = [];
-        $this->excludedFields = [];
+        $this->includedFields = $includeFields;
+        $this->excludedFields = $excludedFields;
     }
 
     /**
