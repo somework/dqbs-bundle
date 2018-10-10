@@ -2,7 +2,7 @@
   "name": "strongknit/dqbs",
   "description": "Search service for Doctrine query builder.",
   "version": "1.0.0",
-  "type": "library",
+  "type": "symfony-bundle",
   "keywords": [
     "symfony",
     "bundle",
