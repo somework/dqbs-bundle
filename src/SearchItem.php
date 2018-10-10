@@ -26,6 +26,8 @@ class SearchItem
         $this->entityAlias = $entityAlias;
         $this->searchValue = $searchValue;
         $this->searchByEntityFields = true;
+        $this->includedFields = [];
+        $this->excludedFields = [];
     }
 
     /**

@@ -13,31 +13,51 @@ class SearchService
 
     const LOGIC_AND = 'AND';
 
-    protected $searchItems;
+    protected $searchItems = [];
 
     protected $qb;
 
-    protected $filtersCounter;
+    protected static $filtersCounter;
 
     protected $qbTablesAliases;
 
-    public function __construct(QueryBuilder $qb)
-    {
-        $this->searchItems = [];
-        $this->qb = $qb;
-        $this->filtersCounter = 0;
-        $this->getQbTablesAliases();
-    }
-
+    /**
+     * @param SearchItem $searchItem
+     */
     public function addSearchItem(SearchItem $searchItem)
     {
         $this->searchItems[] = $searchItem;
     }
 
     /**
+     * @param QueryBuilder $qb
+     * @param string       $logic
+     * @return $this
      * @throws DqbsBundleException
      */
-    public function getWhere()
+    public function applySearch(QueryBuilder $qb, $logic = self::LOGIC_AND)
+    {
+        self::$filtersCounter = 0;
+        $this->qb = $qb;
+        $this->getQbTablesAliases();
+        $data = $this->getWhere();
+        dump($data);
+        /*if (self::LOGIC_AND === mb_strtoupper($logic)) {
+            $this->qb->andWhere($data['where']);
+        } else {
+            $this->qb->orWhere($data['where']);
+        }
+        foreach ($data['params'] as $param) {
+            $this->qb->setParameter($param['name'], $param['value']);
+        }*/
+
+        return $this;
+    }
+
+    /**
+     * @throws DqbsBundleException
+     */
+    protected function getWhere()
     {
         $result = [
             'where' => '',
@@ -54,33 +74,13 @@ class SearchService
     }
 
     /**
-     * @param string $logic
-     * @return $this
-     * @throws DqbsBundleException
-     */
-    public function applySearch($logic = self::LOGIC_AND)
-    {
-        $data = $this->getWhere();
-        if (self::LOGIC_AND === mb_strtoupper($logic)) {
-            $this->qb->andWhere($data['where']);
-        } else {
-            $this->qb->orWhere($data['where']);
-        }
-        foreach ($data['params'] as $param) {
-            $this->qb->setParameter($param['name'], $param['value']);
-        }
-
-        return $this;
-    }
-
-    /**
      * @param SearchItem $item
      * @return array
      * @throws DqbsBundleException
      */
     protected function getWhereForItem(SearchItem $item)
     {
-        $this->filtersCounter++;
+        self::$filtersCounter++;
 
         $itemClassName = $this->qbTablesAliases[$item->getEntityAlias()] ?? null;
         if (!$itemClassName) {
@@ -102,8 +102,8 @@ class SearchService
         $includeFields = array_diff($includeFields, $item->getExcludedFields());
 
         $useFilterT = $useFilterI = false;
-        $tParamName = 'tfilter'.$this->filtersCounter;
-        $iParamName = 'ifilter'.$this->filtersCounter;
+        $tParamName = 'tfilter'.self::$filtersCounter;
+        $iParamName = 'ifilter'.self::$filtersCounter;
 
         $filterWhere = '';
         $where = '';
@@ -112,17 +112,17 @@ class SearchService
             $fieldType = $metadata->getTypeOfField($incF);
             if (in_array($fieldType, [Type::JSON_ARRAY])) {
                 $useFilterT = true;
-                $filterWhere .= '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName)) or ";
+                $filterWhere .= '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName)) OR ";
             } elseif (in_array($fieldType, [Type::STRING, Type::TEXT])) {
                 $useFilterT = true;
-                $filterWhere .= '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName)) or ";
+                $filterWhere .= '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName)) OR ";
             } elseif (in_array($fieldType, [Type::BIGINT, Type::INTEGER, Type::SMALLINT]) && is_numeric($item->getSearchValue())) {
                 $useFilterI = true;
-                $filterWhere .= '('.$item->getEntityAlias().'.'.$incF." = :$iParamName) or ";
+                $filterWhere .= '('.$item->getEntityAlias().'.'.$incF." = :$iParamName) OR ";
             }
 
             if ($filterWhere) {
-                $filterWhere = rtrim($filterWhere, ' or ');
+                $filterWhere = rtrim($filterWhere, ' OR ');
                 $where = "$where OR ( $filterWhere )";
             }
 
