@@ -13,13 +13,17 @@ class DqbSearch
 
     const LOGIC_AND = 'AND';
 
+    const AVAILABLE_LOGIC = [self::LOGIC_AND, self::LOGIC_OR];
+
     protected $searchItems = [];
 
     protected $qb;
 
-    protected $filtersCounter;
+    protected $searchItemsCounter;
 
     protected $qbTablesAliases;
+
+    protected $searchValue;
 
     /**
      * @param DqbSearchItem $searchItem
@@ -34,15 +38,21 @@ class DqbSearch
 
     /**
      * @param QueryBuilder $qb
+     * @param string       $searchValue
      * @param string       $logic
      * @return $this
      * @throws DqbsBundleException
      */
-    public function applySearch(QueryBuilder $qb, $logic = self::LOGIC_AND)
+    public function applySearch(QueryBuilder $qb, $searchValue = '', $logic = self::LOGIC_AND)
     {
-        $this->filtersCounter = 0;
+        if (!in_array($logic, self::AVAILABLE_LOGIC)) {
+            throw new DqbsBundleException("Unavailable logic '$logic'");
+        }
+        $this->searchItemsCounter = 0;
+        $this->searchValue = $searchValue;
         $this->qb = $qb;
-        $this->getQbTablesAliases();
+        $this->collectTableAliasesFromQb();
+        $this->prepareSearchItems();
         $data = $this->getWhere();
         if (self::LOGIC_AND === mb_strtoupper($logic)) {
             $this->qb->andWhere($data['where']);
@@ -59,6 +69,30 @@ class DqbSearch
     /**
      * @throws DqbsBundleException
      */
+    protected function prepareSearchItems()
+    {
+        if (!$this->searchItems && '' == $this->searchValue) {
+            throw new DqbsBundleException("Search value does not set.");
+        }
+
+        if (!$this->searchItems) {
+            foreach ($this->qbTablesAliases as $alias => $class) {
+                $this->searchItems[] = new DqbSearchItem($alias);
+            }
+        }
+
+        foreach ($this->searchItems as $searchItem) {
+            if ('' == $searchItem->getSearchValue() && '' == $this->searchValue) {
+                throw new DqbsBundleException("Search value does not set.");
+            } else {
+                $searchItem->setSearchValue($this->searchValue);
+            }
+        }
+    }
+
+    /**
+     * @throws DqbsBundleException
+     */
     protected function getWhere()
     {
         $result = [
@@ -66,7 +100,7 @@ class DqbSearch
             'params' => [],
         ];
         foreach ($this->searchItems as $item) {
-            $itemData = $this->getWhereForItem($item);
+            $itemData = $this->getWhereForSearchItem($item);
             $result['where'] .= '('.$itemData['where'].')'.' OR ';
             $result['params'] = array_merge($result['params'], $itemData['params']);
         }
@@ -80,9 +114,9 @@ class DqbSearch
      * @return array
      * @throws DqbsBundleException
      */
-    protected function getWhereForItem(DqbSearchItem $item)
+    protected function getWhereForSearchItem(DqbSearchItem $item)
     {
-        $this->filtersCounter++;
+        $this->searchItemsCounter++;
 
         $itemClassName = $this->qbTablesAliases[$item->getEntityAlias()] ?? null;
         if (!$itemClassName) {
@@ -93,19 +127,19 @@ class DqbSearch
         $entityFields = $metadata->getFieldNames();
         if ($diff = array_diff($item->getIncludedFields(), $entityFields)) {
             $diff = implode($diff, ',');
-            throw new DqbsBundleException(sprintf('No fields "%s" in the entity "%s"', $diff, $item->getEntityAlias()));
+            throw new DqbsBundleException(sprintf('No fields found in the entity "%s": "%s"', $item->getEntityAlias(), $diff));
         }
         if ($diff = array_diff($item->getExcludedFields(), $entityFields)) {
             $diff = implode($diff, ',');
-            throw new DqbsBundleException(sprintf('No fields "%s" in the entity "%s".', $diff, $item->getEntityAlias()));
+            throw new DqbsBundleException(sprintf('No fields found in the entity "%s": "%s"', $item->getEntityAlias(), $diff));
         }
 
         $includeFields = $item->getIncludedFields() ?: $entityFields;
         $includeFields = array_diff($includeFields, $item->getExcludedFields());
 
         $useFilterT = $useFilterI = false;
-        $tParamName = 'tFilter'.$this->filtersCounter;
-        $iParamName = 'iFilter'.$this->filtersCounter;
+        $tParamName = 'tFilter'.$this->searchItemsCounter;
+        $iParamName = 'iFilter'.$this->searchItemsCounter;
 
         $where = '';
         $params = [];
@@ -148,7 +182,7 @@ class DqbSearch
     /**
      *
      */
-    protected function getQbTablesAliases()
+    protected function collectTableAliasesFromQb()
     {
         $this->qbTablesAliases = [];
         /** @var From $part */
