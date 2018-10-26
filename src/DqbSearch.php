@@ -201,6 +201,10 @@ class DqbSearch
      */
     protected function getAssociation($baseAlias, $className, $joins)
     {
+        if (!$joins) {
+            return;
+        }
+
         $associations = $this->qb->getEntityManager()
             ->getClassMetadata($className)
             ->getAssociationMappings();
