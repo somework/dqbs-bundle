@@ -1,5 +1,5 @@
 {
-  "name": "strongknit/dqbs",
+  "name": "somework/dqbs",
   "description": "Search service for Doctrine query builder.",
   "version": "1.0.2",
   "type": "symfony-bundle",
@@ -11,13 +11,10 @@
   ],
   "license": "MIT",
   "require": {
-    "php": ">=7.0",
-    "symfony/framework-bundle": "^3.0|^4.0",
-    "doctrine/orm": "^2.5",
-    "doctrine/dbal": "^2.5"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^6.0"
+    "php": "^7.2",
+    "symfony/framework-bundle": "^4.0|^5.0",
+    "doctrine/orm": "^2",
+    "doctrine/dbal": "^3"
   },
   "autoload": {
     "psr-4": {"Strongknit\\DqbsBundle\\": "./src/"}

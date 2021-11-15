@@ -2,18 +2,18 @@
 
 namespace Strongknit\DqbsBundle;
 
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Query\Expr\From;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\ORM\QueryBuilder;
 
 class DqbSearch
 {
-    const LOGIC_OR = 'OR';
+    public const LOGIC_OR = 'OR';
 
-    const LOGIC_AND = 'AND';
+    public const LOGIC_AND = 'AND';
 
-    const AVAILABLE_LOGIC = [self::LOGIC_AND, self::LOGIC_OR];
+    public const AVAILABLE_LOGIC = [self::LOGIC_AND, self::LOGIC_OR];
 
     protected $searchItems = [];
 
@@ -29,7 +29,7 @@ class DqbSearch
      * @param DqbSearchItem $searchItem
      * @return DqbSearch
      */
-    public function addSearchItem(DqbSearchItem $searchItem)
+    public function addSearchItem(DqbSearchItem $searchItem): DqbSearch
     {
         $this->searchItems[] = $searchItem;
 
@@ -43,7 +43,7 @@ class DqbSearch
      * @return $this
      * @throws DqbsBundleException
      */
-    public function applySearch(QueryBuilder $qb, $searchValue = '', $logic = self::LOGIC_AND)
+    public function applySearch(QueryBuilder $qb, string $searchValue = '', string $logic = self::LOGIC_AND): DqbSearch
     {
         if (!in_array($logic, self::AVAILABLE_LOGIC)) {
             throw new DqbsBundleException("Unavailable logic '$logic'");
@@ -69,7 +69,7 @@ class DqbSearch
     /**
      * @throws DqbsBundleException
      */
-    protected function prepareSearchItems()
+    protected function prepareSearchItems(): void
     {
         if (!$this->searchItems && '' == $this->searchValue) {
             throw new DqbsBundleException("Search value does not set.");
@@ -82,7 +82,7 @@ class DqbSearch
         }
 
         foreach ($this->searchItems as $searchItem) {
-            if ('' == $searchItem->getSearchValue() && '' == $this->searchValue) {
+            if ('' == $this->searchValue && '' == $searchItem->getSearchValue()) {
                 throw new DqbsBundleException("Search value does not set.");
             } else {
                 $searchItem->setSearchValue($this->searchValue);
@@ -93,7 +93,7 @@ class DqbSearch
     /**
      * @throws DqbsBundleException
      */
-    protected function getWhere()
+    protected function getWhere(): array
     {
         $result = [
             'where' => '',
@@ -114,24 +114,30 @@ class DqbSearch
      * @return array
      * @throws DqbsBundleException
      */
-    protected function getWhereForSearchItem(DqbSearchItem $item)
+    protected function getWhereForSearchItem(DqbSearchItem $item): array
     {
         $this->searchItemsCounter++;
 
         $itemClassName = $this->qbTablesAliases[$item->getEntityAlias()] ?? null;
         if (!$itemClassName) {
-            throw new DqbsBundleException("Table with alias '{$item->getEntityAlias()}' does not found in query builder");
+            throw new DqbsBundleException(
+                "Table with alias '{$item->getEntityAlias()}' does not found in query builder"
+            );
         }
         $metadata = $this->qb->getEntityManager()->getClassMetadata($itemClassName);
 
         $entityFields = $metadata->getFieldNames();
         if ($diff = array_diff($item->getIncludedFields(), $entityFields)) {
-            $diff = implode($diff, ',');
-            throw new DqbsBundleException(sprintf('No fields found in the entity "%s": "%s"', $item->getEntityAlias(), $diff));
+            $diff = implode(',', $diff);
+            throw new DqbsBundleException(
+                sprintf('No fields found in the entity "%s": "%s"', $item->getEntityAlias(), $diff)
+            );
         }
         if ($diff = array_diff($item->getExcludedFields(), $entityFields)) {
-            $diff = implode($diff, ',');
-            throw new DqbsBundleException(sprintf('No fields found in the entity "%s": "%s"', $item->getEntityAlias(), $diff));
+            $diff = implode(',', $diff);
+            throw new DqbsBundleException(
+                sprintf('No fields found in the entity "%s": "%s"', $item->getEntityAlias(), $diff)
+            );
         }
 
         $includeFields = $item->getIncludedFields() ?: $entityFields;
@@ -145,13 +151,15 @@ class DqbSearch
         $params = [];
         foreach ($includeFields as $incF) {
             $fieldType = $metadata->getTypeOfField($incF);
-            if (in_array($fieldType, [Type::JSON_ARRAY])) {
+            if ($fieldType === Types::JSON) {
                 $useFilterT = true;
                 $where .= '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName)) OR ";
-            } elseif (in_array($fieldType, [Type::STRING, Type::TEXT])) {
+            } elseif (in_array($fieldType, [Types::STRING, Types::TEXT], true)) {
                 $useFilterT = true;
                 $where .= '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName)) OR ";
-            } elseif (in_array($fieldType, [Type::BIGINT, Type::INTEGER, Type::SMALLINT]) && is_numeric($item->getSearchValue())) {
+            } elseif (in_array($fieldType, [Types::BIGINT, Types::INTEGER, Types::SMALLINT], true) && is_numeric(
+                    $item->getSearchValue()
+                )) {
                 $useFilterI = true;
                 $where .= '('.$item->getEntityAlias().'.'.$incF." = :$iParamName) OR ";
             }
@@ -167,7 +175,7 @@ class DqbSearch
         if ($useFilterI) {
             $params[] = [
                 'name' => $iParamName,
-                'value' => (int) $item->getSearchValue(),
+                'value' => (int)$item->getSearchValue(),
             ];
         }
 
@@ -182,7 +190,7 @@ class DqbSearch
     /**
      *
      */
-    protected function collectTableAliasesFromQb()
+    protected function collectTableAliasesFromQb(): void
     {
         $this->qbTablesAliases = [];
         /** @var From $part */
@@ -199,7 +207,7 @@ class DqbSearch
      * @param string $className
      * @param Join[] $joins
      */
-    protected function getAssociation($baseAlias, $className, $joins)
+    protected function getAssociation(string $baseAlias, string $className, array $joins): void
     {
         if (!$joins) {
             return;
@@ -211,10 +219,10 @@ class DqbSearch
         foreach ($associations as $alias => $data) {
             foreach ($joins as $join) {
                 if ($join->getJoin() == $baseAlias.'.'.$alias) {
-                    if (!isset($result[$join->getAlias()])) {
-                        $this->qbTablesAliases[$join->getAlias()] = $data['targetEntity'];
-                        $this->getAssociation($join->getAlias(), $data['targetEntity'], $joins);
-                    }
+//                    if (!isset($result[$join->getAlias()])) {
+                    $this->qbTablesAliases[$join->getAlias()] = $data['targetEntity'];
+                    $this->getAssociation($join->getAlias(), $data['targetEntity'], $joins);
+//                    }
                 }
             }
         }

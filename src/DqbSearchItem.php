@@ -23,8 +23,12 @@ class DqbSearchItem
      * @param array  $includeFields
      * @param array  $excludedFields
      */
-    public function __construct($entityAlias, $searchValue = '', $includeFields = [], $excludedFields = [])
-    {
+    public function __construct(
+        string $entityAlias,
+        string $searchValue = '',
+        array $includeFields = [],
+        array $excludedFields = []
+    ) {
         $this->entityAlias = $entityAlias;
         $this->searchValue = $searchValue;
         $this->searchByEntityFields = true;
@@ -35,7 +39,7 @@ class DqbSearchItem
     /**
      * @return string
      */
-    public function getEntityAlias()
+    public function getEntityAlias(): string
     {
         return $this->entityAlias;
     }
@@ -44,7 +48,7 @@ class DqbSearchItem
      * @param string $entityAlias
      * @return DqbSearchItem
      */
-    public function setEntityAlias($entityAlias)
+    public function setEntityAlias(string $entityAlias): DqbSearchItem
     {
         $this->entityAlias = $entityAlias;
 
@@ -54,7 +58,7 @@ class DqbSearchItem
     /**
      * @return string
      */
-    public function getSearchValue()
+    public function getSearchValue(): string
     {
         return $this->searchValue;
     }
@@ -63,7 +67,7 @@ class DqbSearchItem
      * @param string $searchValue
      * @return DqbSearchItem
      */
-    public function setSearchValue($searchValue)
+    public function setSearchValue(string $searchValue): DqbSearchItem
     {
         $this->searchValue = $searchValue;
 
@@ -73,7 +77,7 @@ class DqbSearchItem
     /**
      * @return string
      */
-    public function getSearchValueIgnorePrefix()
+    public function getSearchValueIgnorePrefix(): string
     {
         return $this->searchValueIgnorePrefix;
     }
@@ -82,7 +86,7 @@ class DqbSearchItem
      * @param string $searchValueIgnorePrefix
      * @return DqbSearchItem
      */
-    public function setSearchValueIgnorePrefix($searchValueIgnorePrefix)
+    public function setSearchValueIgnorePrefix(string $searchValueIgnorePrefix): DqbSearchItem
     {
         $this->searchValueIgnorePrefix = $searchValueIgnorePrefix;
 
@@ -92,7 +96,7 @@ class DqbSearchItem
     /**
      * @return array
      */
-    public function getIncludedFields()
+    public function getIncludedFields(): array
     {
         return $this->includedFields;
     }
@@ -101,7 +105,7 @@ class DqbSearchItem
      * @param array $includedFields
      * @return DqbSearchItem
      */
-    public function setIncludedFields($includedFields)
+    public function setIncludedFields(array $includedFields): DqbSearchItem
     {
         $this->includedFields = $includedFields;
 
@@ -111,7 +115,7 @@ class DqbSearchItem
     /**
      * @return array
      */
-    public function getExcludedFields()
+    public function getExcludedFields(): array
     {
         return $this->excludedFields;
     }
@@ -120,7 +124,7 @@ class DqbSearchItem
      * @param array $excludedFields
      * @return DqbSearchItem
      */
-    public function setExcludedFields($excludedFields)
+    public function setExcludedFields(array $excludedFields): DqbSearchItem
     {
         $this->excludedFields = $excludedFields;
 
