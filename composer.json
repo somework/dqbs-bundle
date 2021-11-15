@@ -1,7 +1,6 @@
 {
   "name": "somework/dqbs",
   "description": "Search service for Doctrine query builder.",
-  "version": "1.0.2",
   "type": "symfony-bundle",
   "keywords": [
     "symfony",
