@@ -13,7 +13,7 @@
     "php": "^7.2",
     "symfony/framework-bundle": "^4.0|^5.0",
     "doctrine/orm": "^2",
-    "doctrine/dbal": "^3"
+    "doctrine/dbal": "^2"
   },
   "autoload": {
     "psr-4": {"Strongknit\\DqbsBundle\\": "./src/"}
