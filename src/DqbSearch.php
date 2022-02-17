@@ -17,6 +17,9 @@ class DqbSearch
 
     protected $searchItems = [];
 
+    /**
+     * @var QueryBuilder
+     */
     protected $qb;
 
     protected $searchItemsCounter;
@@ -84,9 +87,9 @@ class DqbSearch
         foreach ($this->searchItems as $searchItem) {
             if ('' == $this->searchValue && '' == $searchItem->getSearchValue()) {
                 throw new DqbsBundleException("Search value does not set.");
-            } else {
-                $searchItem->setSearchValue($this->searchValue);
             }
+
+            $searchItem->setSearchValue($this->searchValue);
         }
     }
 
@@ -96,15 +99,16 @@ class DqbSearch
     protected function getWhere(): array
     {
         $result = [
-            'where' => '',
             'params' => [],
         ];
+        $whereParts = [];
+
         foreach ($this->searchItems as $item) {
             $itemData = $this->getWhereForSearchItem($item);
-            $result['where'] .= '('.$itemData['where'].')'.' OR ';
+            $whereParts[] = '('.$itemData['where'].')';
             $result['params'] = array_merge($result['params'], $itemData['params']);
         }
-        $result['where'] = rtrim($result['where'], ' OR ');
+        $result['where'] = implode(' OR ', $whereParts);
 
         return $result;
     }
@@ -147,21 +151,22 @@ class DqbSearch
         $tParamName = 'tFilter'.$this->searchItemsCounter;
         $iParamName = 'iFilter'.$this->searchItemsCounter;
 
-        $where = '';
+        $whereParts = [];
         $params = [];
         foreach ($includeFields as $incF) {
             $fieldType = $metadata->getTypeOfField($incF);
-            if ($fieldType === Types::JSON) {
+            if (in_array($fieldType, [Types::JSON, 'json_array', 'jsonb'], true)) {
                 $useFilterT = true;
-                $where .= '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName)) OR ";
+                $whereParts[] = '(UPPER(CAST('.$item->getEntityAlias().'.'.$incF." AS TEXT)) like UPPER(:$tParamName))";
             } elseif (in_array($fieldType, [Types::STRING, Types::TEXT], true)) {
                 $useFilterT = true;
-                $where .= '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName)) OR ";
-            } elseif (in_array($fieldType, [Types::BIGINT, Types::INTEGER, Types::SMALLINT], true) && is_numeric(
-                    $item->getSearchValue()
-                )) {
+                $whereParts[] = '(UPPER('.$item->getEntityAlias().'.'.$incF.") like UPPER(:$tParamName))";
+            } elseif (
+                in_array($fieldType, [Types::BIGINT, Types::INTEGER, Types::SMALLINT], true) &&
+                is_numeric($item->getSearchValue())
+            ) {
                 $useFilterI = true;
-                $where .= '('.$item->getEntityAlias().'.'.$incF." = :$iParamName) OR ";
+                $whereParts[] = '('.$item->getEntityAlias().'.'.$incF." = :$iParamName)";
             }
         }
 
@@ -179,10 +184,8 @@ class DqbSearch
             ];
         }
 
-        $where = rtrim($where, " OR ");
-
         return [
-            'where' => $where,
+            'where' => implode(' OR ', $whereParts),
             'params' => $params,
         ];
     }
